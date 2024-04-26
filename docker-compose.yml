@@ -51,7 +51,7 @@ services:
       interval: 7s
       retries: 5
     volumes:
-      # - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
       - postgresql:/var/lib/postgresql/data
 
   jaeger:

@@ -10,6 +10,7 @@ from models.roles import Role
 from models.user import User
 from schemas.user import UserInDB, UserInput, UserUUID
 from services.jwt import JWT
+from services.notify import NotifyClient
 from services.role import RoleService
 from services.user_role import UserRoleService
 
@@ -36,6 +37,7 @@ async def register(
     await new_user.save(db_session)
     default_role = await RoleService(db_session).get_role_by_name('default')
     await UserRoleService(db_session).create_user_role(user_id=new_user.id, role_id=default_role.id)
+    await NotifyClient.send_notify(new_user.id)
     return new_user
 
 

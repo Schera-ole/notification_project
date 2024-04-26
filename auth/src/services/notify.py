@@ -5,6 +5,7 @@ import httpx
 
 from core.settings import settings
 
+
 class NotifyAbstract(ABC):
 
     @abstractmethod
@@ -13,7 +14,9 @@ class NotifyAbstract(ABC):
 
 
 class NotifyClient(NotifyAbstract):
-    async def send_notify(self, user_id):
+
+    @staticmethod
+    async def send_notify(user_id):
         data = {
             'user_ids': [user_id],
             'template_name': settings.welcome_template_name,
@@ -26,4 +29,3 @@ class NotifyClient(NotifyAbstract):
                 response.raise_for_status()
             except httpx.HTTPError as exc:
                 logging.error(f'Problems with sending notification to user {user_id}: {exc}')
-
