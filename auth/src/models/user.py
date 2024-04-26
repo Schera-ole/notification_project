@@ -3,7 +3,7 @@ from datetime import datetime
 
 import sqlalchemy.exc
 from fastapi import HTTPException
-from sqlalchemy import (Column, DateTime, ForeignKey, String, Text,
+from sqlalchemy import (Boolean, Column, DateTime, ForeignKey, String, Text,
                         UniqueConstraint)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -23,6 +23,7 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
     email = Column(String(255), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
+    is_verified = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     auth_history = relationship('AuthHistory', back_populates='user', cascade='all, delete', passive_deletes=True)
@@ -55,6 +56,20 @@ class User(Base):
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail='Invalid credential'
             )
+
+    @classmethod
+    async def get_user_by_id(cls, db: AsyncSession, user_id: str) -> 'User':
+        """
+        Асинхронно ищет пользователя по user_id
+        :param db: AsyncSQLAlchemy сессия
+        :param user_id: uuid пользователя для поиска
+        :return: Объект пользователя или None, если не найден
+        """
+        async with db.begin():
+            stmt = select(cls).where(cls.id == user_id)
+            result = await db.execute(stmt)
+            user = result.scalar_one_or_none()
+            return user
 
     @classmethod
     async def get_user_by_token(cls, db_session, token: str):

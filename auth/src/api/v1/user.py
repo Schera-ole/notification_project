@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Header, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from opentelemetry import trace
@@ -8,7 +8,7 @@ from db.psql import get_session
 from models.auth_history import AuthHistory
 from models.roles import Role
 from models.user import User
-from schemas.user import UserInDB, UserInput
+from schemas.user import UserInDB, UserInput, UserUUID
 from services.jwt import JWT
 from services.role import RoleService
 from services.user_role import UserRoleService
@@ -132,3 +132,24 @@ async def refresh_token(
     await user.logout(credentials.credentials)
 
     return await JWT.get_tokens(user.id, roles)
+
+
+@router.get('/get-user-info/', response_model=UserInDB)
+async def get_user_info(
+    user_id: UserUUID = Depends(),
+    db_session: AsyncSession = Depends(get_session),
+    X_Request_Id: str = Header(...),
+) -> dict:
+    """
+    Получение информации о пользователе
+    :return: dict
+    """
+    user_input = user_id.model_dump()
+    user: User = await User.get_user_by_id(db_session, user_input['user_id'])
+
+    if not user:
+        raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail='User not found'
+            )
+    return user

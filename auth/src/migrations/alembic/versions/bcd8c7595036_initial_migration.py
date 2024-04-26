@@ -45,8 +45,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('id'),
-    sa.UniqueConstraint('id', 'timestamp'),
-    postgresql_partition_by='RANGE (timestamp)'
+    sa.UniqueConstraint('id', 'timestamp')
     )
     op.create_table('social_account',
     sa.Column('id', sa.UUID(), nullable=False),

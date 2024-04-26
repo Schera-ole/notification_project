@@ -21,6 +21,7 @@ opentelemetry-api==1.17.0
 opentelemetry-sdk==1.17.0
 opentelemetry-instrumentation-fastapi==0.38b0
 opentelemetry-exporter-jaeger==1.17.0
+httpx==0.27.0
 yandexid
 yandex-oauth
 async-fastapi-jwt-auth

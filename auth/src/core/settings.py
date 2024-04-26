@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     service_jaeger_name: str = Field('auth', alias='SERVICE_JAEGER_NAME')
     is_enable_tracer: bool = Field(True, alias='IS_ENABLE_TRACER')
 
+    # Notification API
+    welcome_template_name: str = 'welcome'
+    notify_api_url: str = Field('http://notify:9090', alias='NOTIFY_API_URL')
+
 
 class YandexSettings(BaseSettings):
     YANDEX_CLIENT_ID: str = Field(alias='YANDEX_CLIENT_ID')
