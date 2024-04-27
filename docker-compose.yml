@@ -72,6 +72,19 @@ services:
       interval: 5s
       timeout: 30s
       retries: 5
+
+  rabbitmq:
+    <<: *common
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: 'praktikum'
+      RABBITMQ_DEFAULT_PASS: 'praktikum'
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    volumes:
+      - ./configs/rabbitmq/definitions.json:/opt/definitions.json:ro
+      - ./configs/rabbitmq/rabbitmq.config:/etc/rabbitmq/rabbitmq.config:ro
   
 networks:
   praktikum-network:

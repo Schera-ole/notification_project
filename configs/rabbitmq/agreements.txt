@@ -1,0 +1,11 @@
+Queue:
+[микросервис][действие консьюмера]
+notification.get_user_data
+notification.check_time_to_send
+notification.send_to_user
+notification.write_to_db
+
+Reporting key:
+[сущность]-reporting.[версия].[событие]
+user-reporting.v1.register
+user-reporting.v1.time
