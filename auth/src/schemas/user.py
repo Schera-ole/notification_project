@@ -14,3 +14,7 @@ class UserInDB(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class UserUUID(BaseModel):
+    user_id: UUID
