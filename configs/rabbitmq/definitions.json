@@ -82,7 +82,7 @@
       "vhost": "/",
       "destination": "notification.get_user_data",
       "destination_type": "queue",
-      "routing_key": "*register",
+      "routing_key": "#.register",
       "arguments": {}
     },
     {
@@ -90,7 +90,23 @@
         "vhost": "/",
         "destination": "notification.write_to_db",
         "destination_type": "queue",
-        "routing_key": "*register",
+        "routing_key": "#.register",
+        "arguments": {}
+    },
+    {
+        "source": "notify-exchange",
+        "vhost": "/",
+        "destination": "notification.check_time_to_send",
+        "destination_type": "queue",
+        "routing_key": "#.time",
+        "arguments": {}
+    },
+    {
+        "source": "notify-exchange",
+        "vhost": "/",
+        "destination": "notification.write_to_db",
+        "destination_type": "queue",
+        "routing_key": "#.time",
         "arguments": {}
     },
     {

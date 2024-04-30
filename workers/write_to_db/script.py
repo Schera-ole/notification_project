@@ -1,6 +1,5 @@
 import json
 import logging
-import sys
 
 from pika import BlockingConnection, ConnectionParameters, PlainCredentials
 from pika.adapters.blocking_connection import BlockingChannel
@@ -8,11 +7,6 @@ from pika.spec import BasicProperties, Basic
 import requests
 
 from settings import settings
-
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-stream_handler = logging.StreamHandler(sys.stdout)
-logger.addHandler(stream_handler)
 
 
 def handler(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProperties, body: bytes) -> None:
@@ -29,7 +23,7 @@ def handler(ch: BlockingChannel, method: Basic.Deliver, properties: BasicPropert
             body=body
         )
     except ConnectionError as e:
-        logger.error(f'Connection problems with auth service: {e}')
+        logging.error(f'Connection problems with auth service: {e}')
         ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
     ch.basic_ack(delivery_tag=method.delivery_tag)
 

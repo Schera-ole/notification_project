@@ -95,6 +95,14 @@ services:
     depends_on:
       - rabbitmq
 
+  worker_send_email:
+    <<: *common
+    build: workers/send_email
+    expose:
+      - '9112'
+    entrypoint: bash -c "python script.py"
+    depends_on:
+      - rabbitmq
   
 networks:
   praktikum-network:
