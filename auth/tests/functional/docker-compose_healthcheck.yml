@@ -1,0 +1,78 @@
+x-common:
+  &common
+    networks:
+      - praktikum-network
+    restart: always
+
+version: '3.9'
+services:
+
+  api:
+    <<: *common
+    build: ${API_PATH}
+    image: api-image
+    container_name: api
+    entrypoint: ["gunicorn", "main:app", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:${API_PORT}"]
+    expose:
+      - ${API_PORT}
+    ports:
+      - ${API_PORT}:${API_PORT}
+    volumes:
+      - api:/data
+    depends_on:
+      elastic:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  redis:
+    <<: *common
+    image: redis:7.2
+    command: --port ${REDIS_PORT}
+    ports:
+      - ${REDIS_PORT}:${REDIS_PORT}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 30s
+      retries: 5
+
+  elastic:
+    <<: *common
+    image: elasticsearch:8.6.2
+    ports:
+      - "${ELASTIC_PORT}:${ELASTIC_PORT}"
+    env_file:
+      - ./.env
+    healthcheck:
+      test: curl -s localhost:9200/_cluster/health >/dev/null || exit 1
+      interval: 30s
+      timeout: 30s
+      retries: 10
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+
+  tests:
+    image: api-image
+    container_name: tests
+    entrypoint: >
+      sh -c "pip install --no-cache-dir -r tests/functional/requirements.txt
+      && python -m pytest tests/functional --asyncio-mode=auto"
+    volumes:
+      - ../../tests/:/app/tests/
+    networks:
+      - praktikum-network
+
+    depends_on:
+      elastic:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+networks:
+  praktikum-network:
+    name: praktikum-network
+
+volumes:
+  api:

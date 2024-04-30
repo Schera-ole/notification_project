@@ -1,0 +1,113 @@
+x-common:
+  &common
+    networks:
+      - praktikum-network
+    restart: always
+
+version: '3.9'
+services:
+
+  auth:
+    <<: *common
+    build: auth
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        alembic -c ./migrations/alembic.ini upgrade head
+        alembic -c ./migrations/alembic.ini revision --autogenerate -m "should not create this migration"
+        alembic -c ./migrations/alembic.ini upgrade head
+        python ./create_admin.py
+        gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${AUTH_PORT}
+    expose:
+      - ${AUTH_PORT}
+    ports:
+      - ${AUTH_PORT}:${AUTH_PORT}
+    env_file:
+      - ./.env
+    volumes:
+      - ./create_admin.py:/app/create_admin.py
+      - auth:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+      psql-server:
+        condition: service_healthy
+    environment:
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6831
+
+  psql-server:
+    <<: *common
+    image: postgres:13
+    expose:
+      - ${DB_PORT}
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "${DB_NAME}", "-U", "${DB_USER}"]
+      interval: 7s
+      retries: 5
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+      - postgresql:/var/lib/postgresql/data
+
+  jaeger:
+    <<: *common
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "6831:6831/udp"
+      - "16686:16686"
+
+  redis:
+    <<: *common
+    image: redis:7.2
+    command: --port ${REDIS_PORT}
+    expose:
+      - ${REDIS_PORT}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 30s
+      retries: 5
+
+  rabbitmq:
+    <<: *common
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: 'praktikum'
+      RABBITMQ_DEFAULT_PASS: 'praktikum'
+    ports:
+      - ${RABBITMQ_PORT_1}:${RABBITMQ_PORT_1}
+      - ${RABBITMQ_PORT_2}:${RABBITMQ_PORT_2}
+    volumes:
+      - ./configs/rabbitmq/definitions.json:/opt/definitions.json:ro
+      - ./configs/rabbitmq/rabbitmq.config:/etc/rabbitmq/rabbitmq.config:ro
+
+  worker_user_info:
+    <<: *common
+    build: workers/user_info
+    expose:
+      - '9111'
+    entrypoint: bash -c "python script.py"
+    depends_on:
+      - rabbitmq
+
+  worker_send_email:
+    <<: *common
+    build: workers/send_email
+    expose:
+      - '9112'
+    entrypoint: bash -c "python script.py"
+    depends_on:
+      - rabbitmq
+  
+networks:
+  praktikum-network:
+    name: praktikum-network
+
+volumes:
+  postgresql:
+  auth:

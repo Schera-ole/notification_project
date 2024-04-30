@@ -1,0 +1,126 @@
+{
+    "users": [{
+      "name": "praktikum",
+      "password": "praktikum",
+      "tags": "administrator"
+    }],
+    "vhosts": [{
+      "name": "/"
+    }],
+    "permissions": [{
+      "user": "praktikum",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }],
+    "exchanges": [{
+      "name": "notify-exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+        "name": "send-exchange",
+        "vhost": "/",
+        "type": "fanout",
+        "durable": true,
+        "auto_delete": false,
+        "internal": false,
+        "arguments": {}
+    },
+    {
+        "name": "finish-exchange",
+        "vhost": "/",
+        "type": "fanout",
+        "durable": true,
+        "auto_delete": false,
+        "internal": false,
+        "arguments": {}
+    }],
+    "queues": [{
+      "name": "notification.get_user_data",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 3600000
+      }
+    },
+    {
+        "name": "notification.write_to_db",
+        "vhost": "/",
+        "durable": true,
+        "auto_delete": false,
+        "arguments": {
+          "x-message-ttl": 3600000
+        }
+    },
+    {
+        "name": "notification.check_time_to_send",
+        "vhost": "/",
+        "durable": true,
+        "auto_delete": false,
+        "arguments": {
+          "x-message-ttl": 3600000
+        }
+    },
+    {
+        "name": "notification.send_to_user",
+        "vhost": "/",
+        "durable": true,
+        "auto_delete": false,
+        "arguments": {
+          "x-message-ttl": 3600000
+        }
+    }],
+    "bindings": [{
+      "source": "notify-exchange",
+      "vhost": "/",
+      "destination": "notification.get_user_data",
+      "destination_type": "queue",
+      "routing_key": "#.register",
+      "arguments": {}
+    },
+    {
+        "source": "notify-exchange",
+        "vhost": "/",
+        "destination": "notification.write_to_db",
+        "destination_type": "queue",
+        "routing_key": "#.register",
+        "arguments": {}
+    },
+    {
+        "source": "notify-exchange",
+        "vhost": "/",
+        "destination": "notification.check_time_to_send",
+        "destination_type": "queue",
+        "routing_key": "#.time",
+        "arguments": {}
+    },
+    {
+        "source": "notify-exchange",
+        "vhost": "/",
+        "destination": "notification.write_to_db",
+        "destination_type": "queue",
+        "routing_key": "#.time",
+        "arguments": {}
+    },
+    {
+        "source": "send-exchange",
+        "vhost": "/",
+        "destination": "notification.send_to_user",
+        "destination_type": "queue",
+        "arguments": {}
+    },
+    {
+        "source": "finish-exchange",
+        "vhost": "/",
+        "destination": "notification.write_to_db",
+        "destination_type": "queue",
+        "arguments": {}
+    }]
+  }

@@ -1,0 +1,64 @@
+@startuml notification
+package Инициаторы_событий {
+    component Админка as admin
+    component Генератор as generator
+    component UGS as ugs
+    component Others as others
+}
+note left of generator : Генератор событий по расписанию
+note top of others : Сторонние программные клиенты
+
+
+component API as api
+agent Worker_database as w_db
+agent Worker_user_info as w_u_info
+agent Worker_send_email as w_s_email
+interface exchange as exc
+actor User as user
+
+database Templates as templ
+component Auth as auth
+database Notification as notif
+note left of templ : база данных с теплейтами
+note left of auth : база данных с данными пользователя
+note left of api
+    GET /get_templates 
+    POST /new_template
+    POST /sent_email
+    POST /events
+end note
+
+
+queue Queue as qu {
+    interface exchange as exc
+    queue Мгновенные as moment
+    queue Отложенные as late
+    queue Готовые_к_отправке as ready
+    queue Запись_в_базу as write_to_db
+}
+note left of qu : + DLQ очереди
+note left of late : + по расписанию
+
+admin --> api
+generator --> api
+others --> api
+ugs --> api
+
+api --> exc
+exc --> write_to_db
+exc --> moment
+exc --> late
+
+write_to_db --> w_db 
+w_db --> notif
+
+moment --> w_u_info
+late --> moment
+w_u_info --> auth
+w_u_info --> ready
+ready --> w_s_email
+w_s_email --> user
+w_s_email ---> write_to_db
+
+api --> templ : read/write
+w_s_email --> templ : get template
