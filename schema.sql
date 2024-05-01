@@ -1,9 +1,9 @@
 CREATE SCHEMA IF NOT EXISTS template;
 CREATE SCHEMA IF NOT EXISTS notification;
 CREATE TABLE IF NOT EXISTS template.templates(
-    id SERIAL PRIMARY KEY,
+    id uuid PRIMARY KEY,
     name TEXT NOT NULL UNIQUE,
-    variables JSON NOT NULL,
+    text TEXT NOT NULL,
     version INT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS notification.notifications(
