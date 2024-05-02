@@ -37,6 +37,20 @@ services:
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
 
+  api:
+    <<: *common
+    build: api
+    expose:
+      - ${API_PORT}
+    ports:
+      - ${API_PORT}:${API_PORT}
+    env_file:
+      - ./.env
+    depends_on:
+      psql-server:
+        condition: service_healthy
+
+
   psql-server:
     <<: *common
     image: postgres:13
