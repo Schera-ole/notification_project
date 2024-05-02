@@ -37,6 +37,20 @@ services:
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
 
+  api:
+    <<: *common
+    build: api
+    expose:
+      - ${API_PORT}
+    ports:
+      - ${API_PORT}:${API_PORT}
+    env_file:
+      - ./.env
+    depends_on:
+      psql-server:
+        condition: service_healthy
+
+
   psql-server:
     <<: *common
     image: postgres:13
@@ -72,7 +86,20 @@ services:
       interval: 5s
       timeout: 30s
       retries: 5
-  
+
+  rabbitmq:
+    <<: *common
+    image: rabbitmq:3-management
+    environment:
+      RABBITMQ_DEFAULT_USER: 'praktikum'
+      RABBITMQ_DEFAULT_PASS: 'praktikum'
+    ports:
+      - ${RABBITMQ_PORT_1}:${RABBITMQ_PORT_1}
+      - ${RABBITMQ_PORT_2}:${RABBITMQ_PORT_2}
+    volumes:
+      - ./configs/rabbitmq/definitions.json:/opt/definitions.json:ro
+      - ./configs/rabbitmq/rabbitmq.config:/etc/rabbitmq/rabbitmq.config:ro
+
 networks:
   praktikum-network:
     name: praktikum-network

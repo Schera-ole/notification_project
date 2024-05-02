@@ -1,18 +1,17 @@
+from db.psql import get_session
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from opentelemetry import trace
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from db.psql import get_session
 from models.auth_history import AuthHistory
 from models.roles import Role
 from models.user import User
+from opentelemetry import trace
 from schemas.user import UserInDB, UserInput, UserUUID
 from services.jwt import JWT
 from services.notify import NotifyClient
 from services.role import RoleService
 from services.user_role import UserRoleService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 tracer = trace.get_tracer(__name__)
 router = APIRouter()
