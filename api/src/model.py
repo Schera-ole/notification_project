@@ -1,14 +1,15 @@
 import uuid
 from datetime import datetime
 from uuid import UUID, uuid4
+
 import sqlalchemy
-from sqlalchemy import Column, DateTime, ForeignKey, String, Boolean, Integer
+from db.psql import Base
+from fastapi import HTTPException
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import relationship
-from fastapi import HTTPException
-from db.psql import Base
 from starlette import status
 
 

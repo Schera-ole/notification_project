@@ -1,5 +1,5 @@
-from pydantic_settings import BaseSettings
 from pydantic import Field, PostgresDsn
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -7,6 +7,8 @@ class Settings(BaseSettings):
 
     rabbit_username: str = 'praktikum'
     rabbit_password: str = 'praktikum'
+    rabbit_heartbeat: int = 60
+    rabbit_timeout: int = 300
     rabbit_host: str = 'rabbitmq'
     rabbit_exchange: str = 'notify-exchange'
     rabbit_exchange_type: str = 'direct'

@@ -1,21 +1,17 @@
 import http
 import logging
-from uuid import UUID
-import uvicorn
-from db.psql import get_session
-from schema import Event, Template_schema
-from model import Template
 from contextlib import asynccontextmanager
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+
 import pika
-from fastapi import FastAPI, HTTPException, Depends
-from pydantic.main import BaseModel
-from db import psql
+import uvicorn
 from config import settings
+from db import psql
+from db.psql import get_session
+from fastapi import Depends, FastAPI, HTTPException
+from model import Template
+from schema import Event, Template_schema
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
-
-
 
 logger = logging.getLogger(__name__)
 logger.setLevel(settings.log_level)
@@ -37,8 +33,8 @@ async def lifespan(app: FastAPI):
     parameters = pika.ConnectionParameters(
         settings.rabbit_host,
         credentials=credentials,
-        heartbeat=600,
-        blocked_connection_timeout=300
+        heartbeat=settings.rabbit_heartbeat,
+        blocked_connection_timeout=settings.rabbit_timeout,
     )
 
     def _connect():
@@ -53,14 +49,11 @@ async def lifespan(app: FastAPI):
         durable=True,
     )
     channel.queue_declare(queue=settings.rabbit_events_queue_name, durable=True)
-
     logger.info('Connected to queue.')
     yield
     await psql.async_session.close()
     logger.info('Closing queue connection.')
     connection.close()
-
-
 
 
 app = FastAPI(lifespan=lifespan)
@@ -77,10 +70,10 @@ def put_notification_to_queue(data: Event):
         logger.error(f'ERROR - queue publishing error: {str(err)}')
         raise HTTPException(
             http.HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail='500: Internal server error. Please try later.',
+            detail=f'{http.HTTPStatus.INTERNAL_SERVER_ERROR}: Internal server error. Please try later.',
         )
 
-    return {'201': 'Created event'}
+    return {http.HTTPStatus.CREATED: 'Created event'}
 
 
 @app.post('/api/add_template/', status_code=http.HTTPStatus.CREATED)
@@ -91,9 +84,9 @@ async def add_template(data: Template_schema, db_session: AsyncSession = Depends
         logger.error(f'ERROR - cant create template: {str(err)}')
         raise HTTPException(
             http.HTTPStatus.INTERNAL_SERVER_ERROR,
-            detail='500: Internal server error. Please try later.',
+            detail=f'{http.HTTPStatus.INTERNAL_SERVER_ERROR}: Internal server error. Please try later.',
         )
-    return {'201': 'Template has been created'}
+    return {http.HTTPStatus.CREATED: 'Template has been created'}
 
 
 @app.get('/api/get_templates/', status_code=http.HTTPStatus.OK)
