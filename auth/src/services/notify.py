@@ -21,9 +21,9 @@ class NotifyClient(NotifyAbstract):
         data = {
             'user_ids': [str(user_id)],
             'template_name': settings.welcome_template_name,
+            'version': settings.welcome_template_version,
             'send_immediately': True,
         }
-        # TODO добавить повторную отправку в случае недоступности апи
         async with httpx.AsyncClient() as client:
             try:
                 response = await client.post(f'{settings.notify_api_url}/send_notification/', json=data)

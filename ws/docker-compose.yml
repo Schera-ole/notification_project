@@ -1,0 +1,9 @@
+version: "3.9"
+services:
+  websocket-server:
+    build: .
+    ports:
+      - "8765:8765"
+    command: python ws.py
+    volumes:
+      - .:/app

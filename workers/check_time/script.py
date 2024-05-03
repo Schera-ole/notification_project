@@ -1,39 +1,34 @@
+from datetime import datetime
 import json
 import logging
 
 from pika import BlockingConnection, ConnectionParameters, PlainCredentials
 from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import BasicProperties, Basic
-import requests
 
 from settings import settings
 
 
 def handler(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProperties, body: bytes) -> None:
     data = json.loads(body.decode())
-    data['emails'] = []
-    user_ids = data.get('user_ids')
+    send_time = data.get('send_time')
+    datetime_send_time = datetime.strptime(send_time, "%Y-%m-%d %H:%M:%S")
+    now_time = datetime.now()
+    routing_prefix = properties.headers['routing_key'].rsplit(".", 1)
     try:
-        for user_id in user_ids:
-            user_email = get_user_info(user_id)
-            data['emails'].append(user_email)
-        ch.basic_publish(
-            exchange=settings.exchange_out,
-            routing_key='',
-            body=body
-        )
+        if datetime_send_time > now_time:
+            ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
+            return
+        elif datetime_send_time <= now_time:
+            ch.basic_publish(
+                exchange=settings.exchange_out,
+                routing_key=f'{routing_prefix}.register',
+                body=json.dumps(data)
+            )
     except ConnectionError as e:
         logging.error(f'Connection problems with auth service: {e}')
         ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
     ch.basic_ack(delivery_tag=method.delivery_tag)
-
-
-def get_user_info(user_id):
-    url = settings.auth_url
-    response = requests.get(f'{url}?user_id={user_id}')
-    data = response.json()
-    user_email = data.get('email')
-    return user_email
 
 
 if __name__ == '__main__':

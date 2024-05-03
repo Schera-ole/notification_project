@@ -1,6 +1,7 @@
 import json
 import logging
 import sys
+import uuid
 
 from pika import BlockingConnection, ConnectionParameters, PlainCredentials
 from pika.adapters.blocking_connection import BlockingChannel
@@ -16,6 +17,8 @@ logger.addHandler(stream_handler)
 
 
 def handler(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProperties, body: bytes) -> None:
+    logger.info(body)
+    logger.info(body.decode())
     data = json.loads(body.decode())
     data['emails'] = []
     user_ids = data.get('user_ids')
@@ -26,7 +29,7 @@ def handler(ch: BlockingChannel, method: Basic.Deliver, properties: BasicPropert
         ch.basic_publish(
             exchange=settings.exchange_out,
             routing_key='',
-            body=body
+            body=json.dumps(data)
         )
     except ConnectionError as e:
         logger.error(f'Connection problems with auth service: {e}')
@@ -36,8 +39,11 @@ def handler(ch: BlockingChannel, method: Basic.Deliver, properties: BasicPropert
 
 def get_user_info(user_id):
     url = settings.auth_url
-    response = requests.get(f'{url}?user_id={user_id}')
+    req_id = uuid.uuid4()
+    headers = {'X-Request-Id': str(req_id)}
+    response = requests.get(f'{url}?user_id={user_id}', headers=headers)
     data = response.json()
+    logger.info(data)
     user_email = data.get('email')
     return user_email
 

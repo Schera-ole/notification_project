@@ -9,11 +9,32 @@ from werkzeug.security import generate_password_hash
 UUIDS = [uuid.uuid4(), uuid.uuid4()]
 ADMIN_PASSWORD = generate_password_hash('admin')
 
+NAME = 'welcome'
+TEMPLATE = '''
+Добро пожаловать в Praktix! 
+
+Мы рады приветствовать вас в нашем онлайн кинотеатре!
+
+Чтобы завершить регистрацию и начать наслаждаться нашей обширной коллекцией фильмов, пожалуйста, перейдите по ссылке ниже и подтвердите свой адрес электронной почты:
+
+{{link}}
+
+
+Если у вас есть какие-либо вопросы или вам нужна помощь, не стесняйтесь обращаться в нашу службу поддержки клиентов по адресу support@praktix.ru.
+
+Нам не терпится познакомить вас со всем, что может предложить Praktix!
+
+С уважением,
+Команда Praktix
+'''
+VARIABLES = ['link']
+
 DATA = [
     f"INSERT INTO roles (id, name) VALUES ('{UUIDS[0]}', 'admin') ON CONFLICT (id) DO NOTHING;",
     f"INSERT INTO roles (id, name) VALUES ('{uuid.uuid4()}', 'default') ON CONFLICT (id) DO NOTHING;",
     f"INSERT INTO users (id, email, password) VALUES ('{UUIDS[1]}', 'admin@test.com', '{ADMIN_PASSWORD}') ON CONFLICT (id) DO NOTHING;",
     f"INSERT INTO user_roles (id, user_id, role_id) VALUES ('{uuid.uuid4()}', '{UUIDS[1]}', '{UUIDS[0]}') ON CONFLICT (id) DO NOTHING;"
+    f"INSERT INTO template.templates (id, name, text, variables, version) VALUES ('{uuid.uuid4()}', '{NAME}', '{TEMPLATE}', ARRAY {VARIABLES}, 1)"
 ]
 
 

@@ -37,6 +37,20 @@ services:
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
 
+  notify:
+    <<: *common
+    build: api
+    expose:
+      - ${API_PORT}
+    ports:
+      - ${API_PORT}:${API_PORT}
+    env_file:
+      - ./.env
+    depends_on:
+      psql-server:
+        condition: service_healthy
+
+
   psql-server:
     <<: *common
     image: postgres:13
@@ -90,7 +104,7 @@ services:
     <<: *common
     build: workers/user_info
     expose:
-      - '9111'
+      - ${WORKER_GET_USER_DATA_PORT}
     entrypoint: bash -c "python script.py"
     depends_on:
       - rabbitmq
@@ -99,11 +113,38 @@ services:
     <<: *common
     build: workers/send_email
     expose:
-      - '9112'
+      - ${WORKER_SEND_EMAIL}
     entrypoint: bash -c "python script.py"
     depends_on:
       - rabbitmq
-  
+
+  worker_check_time:
+    <<: *common
+    build: workers/check_time
+    expose:
+      - ${WORKER_CHECK_TIME}
+    entrypoint: bash -c "python script.py"
+    depends_on:
+      - rabbitmq
+
+  worker_write_to_db:
+    <<: *common
+    build: workers/write_to_db
+    expose:
+      - ${WORKER_WRITE_TO_DB}
+    entrypoint: bash -c "python script.py"
+    depends_on:
+      - rabbitmq
+
+  schedule_sender:
+    <<: *common
+    build: schedule
+    expose:
+      - ${SCHEDULE_SENDER}
+    entrypoint: bash -c "python send_notification.py"
+    depends_on:
+      - rabbitmq
+
 networks:
   praktikum-network:
     name: praktikum-network

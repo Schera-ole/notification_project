@@ -1,5 +1,7 @@
+from datetime import datetime
 import json
 import logging
+import smtplib
 import sys
 
 from jinja2 import Environment, BaseLoader
@@ -9,6 +11,7 @@ from pika.adapters.blocking_connection import BlockingChannel
 from pika.spec import BasicProperties, Basic
 from sqlalchemy import Column, Integer, String, Text, ARRAY, create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.dialects.postgresql import UUID
 
 from settings import settings
 
@@ -22,30 +25,45 @@ Base = declarative_base()
 
 class Template(Base):
     __tablename__ = 'templates'
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, autoincrement=True)
     name = Column(String(255), unique=True, nullable=False)
-    template = Column(Text, nullable=False)
+    text = Column(Text, nullable=False)
     variables = Column(ARRAY(String))
     version = Column(Integer, nullable=False)
 
 
 def handler(ch: BlockingChannel, method: Basic.Deliver, properties: BasicProperties, body: bytes) -> None:
     data = json.loads(body.decode())
+    notification = {
+        'notification_id': data['notification_id'],
+        'attempt_at': str(datetime.now())
+    }
     try:
-        template = get_template(data['template'], data['version'])
+        template = get_template(data['template_name'], data['version'])
         rendered_template = parse_jinja(template, data['variables'])
-        ch.basic_publish(
-            exchange=settings.exchange_out,
-            routing_key='',
-            body=body
-        )
+        for email in data['emails']:
+            sendmail(email, rendered_template)
+        notification['status'] = 'sent'
     except ConnectionError as e:
         logger.error(f'Connection problems with auth service: {e}')
+        notification['status'] = 'error'
         ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
     except TemplateError as e:
         logger.error(f'Render error: {e}')
+        notification['status'] = 'error'
         ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
-    logger.info(rendered_template)
+    except (smtplib.SMTPAuthenticationError, OSError) as e:
+        logger.error(f'Authentification error: {e}')
+        notification['status'] = 'error'
+        ch.basic_reject(delivery_tag=method.delivery_tag, requeue=False)
+    finally:
+        ch.basic_publish(
+            exchange=settings.exchange_out,
+            routing_key='',
+            body=json.dumps(notification)
+        )
+        if notification.get('status') == 'error':
+            return
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
 
@@ -58,14 +76,30 @@ def get_template(template_name, version):
     Session = sessionmaker(engine)
     with Session() as session:
         object = session.query(Template).filter_by(name=template_name, version=version).first()
-    return object.template
+    return object.text
 
 
 def parse_jinja(template_str, variables):
     env = Environment(loader=BaseLoader())
     template = env.from_string(template_str)
-    rendered_template = template.render(**variables)
+    if variables:
+        rendered_template = template.render(**variables)
+    else:
+        rendered_template = template.render()
     return rendered_template
+
+
+def sendmail(recepient: str,  msg: str) -> None:
+    smtp_serv = smtplib.SMTP(settings.smtpStr, settings.smtpPort)
+    smtp_serv.ehlo_or_helo_if_needed()
+    smtp_serv.starttls()
+    smtp_serv.ehlo()
+    smtp_serv.login(settings.sender, settings.password)
+    try:
+        smtp_serv.sendmail(settings.sender, recepient, msg)
+    except smtplib.SMTPException:
+        logger.error(f'Cannot send email to email {recepient}')
+    smtp_serv.quit() 
 
 
 if __name__ == '__main__':

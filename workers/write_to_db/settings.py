@@ -1,7 +1,4 @@
-from logging import config as logging_config
-import os
-
-from pydantic import Field
+from pydantic import Field, PostgresDsn
 from pydantic_settings import BaseSettings
 
 
@@ -10,10 +7,11 @@ class Settings(BaseSettings):
     rabbit_host: str = Field('rabbitmq', alias='RABBIT_HOST')
     rabbit_user: str = Field('praktikum', alias='RABBIT_USER')
     rabbit_password: str = Field('praktikum', alias='RABBIT_PASSWORD')
-    queue_in: str = Field('notification.get_user_data', alias='QUEUE_IN')
-    queue_out: str = Field('notification.send_to_user', alias='QUEUE_OUT')
-    exchange_out: str = Field('send-exchange', alias='EXCHANGE_OUT')
-    auth_url: str = 'http://auth:9999/get-user-info/'
+    queue_in: str = Field('notification.write_to_db', alias='QUEUE_IN')
+
+    psql_dsn: PostgresDsn = Field(
+        'postgresql+psycopg2://praktikum:praktikum@psql-server:5432/praktikum', alias='DB_DSN'
+    )
 
     class Config:
         env_file = '.env'
