@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     queue_in: str = Field('notification.get_user_data', alias='QUEUE_IN')
     queue_out: str = Field('notification.send_to_user', alias='QUEUE_OUT')
     exchange_out: str = Field('send-exchange', alias='EXCHANGE_OUT')
-    auth_url: str = 'http://auth:9999/get-user-info/'
+    auth_url: str = 'http://auth:9999/auth/v1/user/get-user-info/'
 
     class Config:
         env_file = '.env'

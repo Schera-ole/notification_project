@@ -1,6 +1,3 @@
-from logging import config as logging_config
-import os
-
 from pydantic import Field, PostgresDsn
 from pydantic_settings import BaseSettings
 
@@ -16,6 +13,11 @@ class Settings(BaseSettings):
     psql_dsn: PostgresDsn = Field(
         'postgresql+psycopg2://praktikum:praktikum@psql-server:5432/praktikum', alias='DB_DSN'
     )
+
+    sender: str = 'test@test.com'
+    password: str = 'test'
+    smtpStr: str = 'smtp.google.com'
+    smtpPort: int = 587
 
 
     class Config:

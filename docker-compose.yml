@@ -37,7 +37,7 @@ services:
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
 
-  api:
+  notify:
     <<: *common
     build: api
     expose:
@@ -104,7 +104,7 @@ services:
     <<: *common
     build: workers/user_info
     expose:
-      - '9111'
+      - ${WORKER_GET_USER_DATA_PORT}
     entrypoint: bash -c "python script.py"
     depends_on:
       - rabbitmq
@@ -113,7 +113,25 @@ services:
     <<: *common
     build: workers/send_email
     expose:
-      - '9112'
+      - ${WORKER_SEND_EMAIL}
+    entrypoint: bash -c "python script.py"
+    depends_on:
+      - rabbitmq
+
+  worker_check_time:
+    <<: *common
+    build: workers/check_time
+    expose:
+      - ${WORKER_CHECK_TIME}
+    entrypoint: bash -c "python script.py"
+    depends_on:
+      - rabbitmq
+
+  worker_write_to_db:
+    <<: *common
+    build: workers/write_to_db
+    expose:
+      - ${WORKER_WRITE_TO_DB}
     entrypoint: bash -c "python script.py"
     depends_on:
       - rabbitmq

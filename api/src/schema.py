@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 class Event(BaseModel):
     user_ids: Optional[List[str]]
     template_name: str
+    version: int
     send_immediately: bool
     send_time: Optional[str] = None
     variables: Optional[Dict[str, Any]] = None

@@ -40,6 +40,15 @@
         "auto_delete": false,
         "internal": false,
         "arguments": {}
+    },
+    {
+      "name": "dl-exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
     }],
     "queues": [{
       "name": "notification.get_user_data",
@@ -47,7 +56,9 @@
       "durable": true,
       "auto_delete": false,
       "arguments": {
-        "x-message-ttl": 3600000
+        "x-message-ttl": 3600000,
+        "x-dead-letter-exchange": "dl-exchange",
+        "x-dead-letter-routing-key": "user-reporting.v1.get_user_data"
       }
     },
     {
@@ -56,7 +67,9 @@
         "durable": true,
         "auto_delete": false,
         "arguments": {
-          "x-message-ttl": 3600000
+          "x-message-ttl": 3600000,
+          "x-dead-letter-exchange": "dl-exchange",
+          "x-dead-letter-routing-key": "user-reporting.v1.write_to_db"
         }
     },
     {
@@ -65,7 +78,9 @@
         "durable": true,
         "auto_delete": false,
         "arguments": {
-          "x-message-ttl": 3600000
+          "x-message-ttl": 3600000,
+          "x-dead-letter-exchange": "dl-exchange",
+          "x-dead-letter-routing-key": "user-reporting.v1.check_time_to_send"
         }
     },
     {
@@ -74,8 +89,38 @@
         "durable": true,
         "auto_delete": false,
         "arguments": {
-          "x-message-ttl": 3600000
+          "x-message-ttl": 3600000,
+          "x-dead-letter-exchange": "dl-exchange",
+          "x-dead-letter-routing-key": "user-reporting.v1.send_to_user"
         }
+    },
+    {
+      "name": "dl.send_to_user",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "dl.get_user_data",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "dl.write_to_db",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "dl.check_time_to_send",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
     }],
     "bindings": [{
       "source": "notify-exchange",
@@ -102,14 +147,6 @@
         "arguments": {}
     },
     {
-        "source": "notify-exchange",
-        "vhost": "/",
-        "destination": "notification.write_to_db",
-        "destination_type": "queue",
-        "routing_key": "#.time",
-        "arguments": {}
-    },
-    {
         "source": "send-exchange",
         "vhost": "/",
         "destination": "notification.send_to_user",
@@ -122,5 +159,38 @@
         "destination": "notification.write_to_db",
         "destination_type": "queue",
         "arguments": {}
-    }]
+    },
+    {
+      "source": "dl-exchange",
+      "vhost": "/",
+      "destination": "dl.check_time_to_send",
+      "destination_type": "queue",
+      "routing_key": "#.check_time_to_send",
+      "arguments": {}
+    },
+    {
+      "source": "dl-exchange",
+      "vhost": "/",
+      "destination": "dl.send_to_user",
+      "destination_type": "queue",
+      "routing_key": "#.send_to_user",
+      "arguments": {}
+    },
+    {
+      "source": "dl-exchange",
+      "vhost": "/",
+      "destination": "dl.get_user_data",
+      "destination_type": "queue",
+      "routing_key": "#.get_user_data",
+      "arguments": {}
+    },
+    {
+      "source": "dl-exchange",
+      "vhost": "/",
+      "destination": "dl.write_to_db",
+      "destination_type": "queue",
+      "routing_key": "#.write_to_db",
+      "arguments": {}
+    }
+  ]
   }
