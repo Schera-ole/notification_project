@@ -12,7 +12,7 @@ logger.setLevel(settings.log_level)
 
 
 def get_template_from_api():
-    url = 'http://0.0.0.0/api/get_templates/'
+    url = f'http://{settings.api_host}:{settings.api_port}/api/get_templates/'
     response = requests.get(url)
     if response.status_code == 200:
         return response.json()
@@ -25,7 +25,7 @@ def call_api():
     templates = get_template_from_api()
     if templates:
         for template in templates:
-            url = 'http://0.0.0.0/send_notification/'
+            url = f'http://{settings.api_host}:{settings.api_port}/send_notification/'
             data = {
                 "user_ids": ["user1", "user2"],
                 "template_name": template["name"],

@@ -1,3 +1,4 @@
 # Проектная работа 10 спринта
 
-Проектные работы в этом модуле в команде. Задания на спринт вы найдёте внутри тем.
+Репозиторий: https://github.com/Schera-ole/notifications_sprint_1
+Invite: https://github.com/Schera-ole/notifications_sprint_1/invitations
