@@ -4,27 +4,28 @@ from uuid import UUID, uuid4
 
 import sqlalchemy
 from db.psql import Base
-from fastapi import HTTPException
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+from fastapi import HTTPException, status
+from sqlalchemy import Column, Integer, String, ARRAY
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import relationship
-from starlette import status
 
 
 class Template(Base):
     __tablename__ = 'templates'
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
-    version = Column(Integer, nullable=True)
-    name = Column(String, nullable=True, unique=True)
-    text = Column(String(1024), nullable=True)
+    __table_args__ = ({"schema": "template"},)
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True)
+    version = Column(Integer, nullable=False)
+    name = Column(String, nullable=False, unique=True)
+    text = Column(String(1024), nullable=False)
+    variables = Column(ARRAY(String))
 
     def __init__(self, data) -> None:
 
         self.version = data.version
         self.name = data.name
-        self.text = data.text
+        self.template = data.text
 
 
     @classmethod
@@ -42,7 +43,6 @@ class Template(Base):
                 detail='Cant\'t find templates',
             )
 
-    __table_args__ = ({"schema": "template"},)
     async def add_template(self, db: AsyncSession) -> dict:
         """
         Асинхронно сохраняет запись в базу данных
@@ -65,4 +65,3 @@ class Template(Base):
 
             return {'success': True}
 
-    __table_args__ = ({"schema": "template"},)

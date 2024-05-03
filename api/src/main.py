@@ -1,6 +1,8 @@
 import http
+import json
 import logging
 from contextlib import asynccontextmanager
+import uuid
 
 import pika
 import uvicorn
@@ -13,7 +15,7 @@ from schema import Event, Template_schema
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('uvicorn')
 logger.setLevel(settings.log_level)
 
 
@@ -42,13 +44,6 @@ async def lifespan(app: FastAPI):
 
     connection = _connect()
     channel = connection.channel()
-
-    channel.exchange_declare(
-        exchange=settings.rabbit_exchange,
-        exchange_type=settings.rabbit_exchange_type,
-        durable=True,
-    )
-    channel.queue_declare(queue=settings.rabbit_events_queue_name, durable=True)
     logger.info('Connected to queue.')
     yield
     await psql.async_session.close()
@@ -58,13 +53,26 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-@app.post('/send_notification/', status_code=http.HTTPStatus.CREATED)
+
+@app.post('/send_notification/', status_code=http.HTTPStatus.CREATED, response_model=dict)
 def put_notification_to_queue(data: Event):
+    data_dump = data.model_dump()
+    if data_dump['send_immediately']:
+        routing_key = f'{settings.rabbit_key_prefix}register'
+        
+    else:
+        routing_key = f'{settings.rabbit_key_prefix}time'
+    headers={'routing_key': routing_key}
+    notification_id = uuid.uuid4()
+    data_dump['notification_id'] = str(notification_id)
     try:
         channel.basic_publish(
             exchange=settings.rabbit_exchange,
-            routing_key=settings.rabbit_events_queue_name,
-            body=data.json(),
+            routing_key=routing_key,
+            body=json.dumps(data_dump),
+            properties=pika.BasicProperties(
+                headers=headers
+            )
         )
     except Exception as err:
         logger.error(f'ERROR - queue publishing error: {str(err)}')
@@ -73,7 +81,7 @@ def put_notification_to_queue(data: Event):
             detail=f'{http.HTTPStatus.INTERNAL_SERVER_ERROR}: Internal server error. Please try later.',
         )
 
-    return {http.HTTPStatus.CREATED: 'Created event'}
+    return {'notification_id': str(notification_id)}
 
 
 @app.post('/api/add_template/', status_code=http.HTTPStatus.CREATED)
@@ -90,9 +98,8 @@ async def add_template(data: Template_schema, db_session: AsyncSession = Depends
 
 
 @app.get('/api/get_templates/', status_code=http.HTTPStatus.OK)
-async def add_template(db_session: AsyncSession = Depends(get_session)):
+async def get_template(db_session: AsyncSession = Depends(get_session)):
     data = await Template.get_templates(db_session)
-
     return data
 
 

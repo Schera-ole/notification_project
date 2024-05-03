@@ -37,7 +37,7 @@ services:
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
 
-  api:
+  notify:
     <<: *common
     build: api
     expose:
@@ -100,6 +100,42 @@ services:
       - ./configs/rabbitmq/definitions.json:/opt/definitions.json:ro
       - ./configs/rabbitmq/rabbitmq.config:/etc/rabbitmq/rabbitmq.config:ro
 
+  worker_user_info:
+    <<: *common
+    build: workers/user_info
+    expose:
+      - ${WORKER_GET_USER_DATA_PORT}
+    entrypoint: bash -c "python script.py"
+    depends_on:
+      - rabbitmq
+
+  worker_send_email:
+    <<: *common
+    build: workers/send_email
+    expose:
+      - ${WORKER_SEND_EMAIL}
+    entrypoint: bash -c "python script.py"
+    depends_on:
+      - rabbitmq
+
+  worker_check_time:
+    <<: *common
+    build: workers/check_time
+    expose:
+      - ${WORKER_CHECK_TIME}
+    entrypoint: bash -c "python script.py"
+    depends_on:
+      - rabbitmq
+
+  worker_write_to_db:
+    <<: *common
+    build: workers/write_to_db
+    expose:
+      - ${WORKER_WRITE_TO_DB}
+    entrypoint: bash -c "python script.py"
+    depends_on:
+      - rabbitmq
+  
 networks:
   praktikum-network:
     name: praktikum-network

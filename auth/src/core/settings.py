@@ -42,6 +42,7 @@ class Settings(BaseSettings):
 
     # Notification API
     welcome_template_name: str = 'welcome'
+    welcome_template_version: int = 1
     notify_api_url: str = Field('http://notify:9090', alias='NOTIFY_API_URL')
 
 
