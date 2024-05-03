@@ -135,7 +135,16 @@ services:
     entrypoint: bash -c "python script.py"
     depends_on:
       - rabbitmq
-  
+
+  schedule_sender:
+    <<: *common
+    build: schedule
+    expose:
+      - ${SCHEDULE_SENDER}
+    entrypoint: bash -c "python send_notification.py"
+    depends_on:
+      - rabbitmq
+
 networks:
   praktikum-network:
     name: praktikum-network
