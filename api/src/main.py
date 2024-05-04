@@ -10,7 +10,7 @@ from config import settings
 from db import psql
 from db.psql import get_session
 from fastapi import Depends, FastAPI, HTTPException
-from model import Template
+from model import Template, User
 from schema import Event, Template_schema
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
@@ -100,6 +100,12 @@ async def add_template(data: Template_schema, db_session: AsyncSession = Depends
 @app.get('/api/get_templates/', status_code=http.HTTPStatus.OK)
 async def get_template(db_session: AsyncSession = Depends(get_session)):
     data = await Template.get_templates(db_session)
+    return data
+
+
+@app.get('/api/get_users/', status_code=http.HTTPStatus.OK)
+async def get_template(db_session: AsyncSession = Depends(get_session)):
+    data = await User.get_users(db_session)
     return data
 
 

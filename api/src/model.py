@@ -1,6 +1,4 @@
 import uuid
-from datetime import datetime
-from uuid import UUID, uuid4
 
 import sqlalchemy
 from db.psql import Base
@@ -48,9 +46,6 @@ class Template(Base):
         Асинхронно сохраняет запись в базу данных
         :param db: AsyncSQLAlchemy сессия
         """
-        print('qwdswqdasasd123')
-        print(self.name)
-
         async with db.begin():
             try:
 
@@ -65,3 +60,28 @@ class Template(Base):
 
             return {'success': True}
 
+
+class User(Base):
+    __tablename__ = 'user'
+    __table_args__ = ({"schema": "template"},)
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True)
+    name = Column(String, nullable=False, unique=True)
+
+    def __init__(self, data) -> None:
+        self.name = data.name
+
+    @classmethod
+    async def get_users(cls, db: AsyncSession):
+        async with db.begin():
+            stmt = select(cls)
+            result = await db.execute(stmt)
+            users = result.scalars().all()
+
+            if users:
+                return users
+
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='Cant\'t find users',
+            )
