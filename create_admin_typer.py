@@ -4,6 +4,8 @@ import uuid
 
 import psycopg2
 from werkzeug.security import generate_password_hash
+import typer
+from typing_extensions import Annotated
 
 
 UUIDS = [uuid.uuid4(), uuid.uuid4()]
@@ -19,11 +21,13 @@ DATA = [
 ]
 
 
-def create_admin():
+def create_admin(
+        user: str,
+        password: Annotated[str, typer.Option(prompt=True, confirmation_prompt=True, hide_input=True)]):
     conn = psycopg2.connect(
         dbname=os.environ.get('DB_NAME'),
-        user=os.environ.get('DB_USER'),
-        password=os.environ.get('DB_PASSWORD'),
+        user=user,
+        password=password,
         host=os.environ.get('DB_HOST'),
         port=os.environ.get('DB_PORT'),
     )
@@ -43,4 +47,4 @@ def create_admin():
 
 
 if __name__ == '__main__':
-    create_admin()
+    typer.run(create_admin)
