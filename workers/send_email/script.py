@@ -41,8 +41,7 @@ def handler(ch: BlockingChannel, method: Basic.Deliver, properties: BasicPropert
     try:
         template = get_template(data['template_name'], data['version'])
         rendered_template = parse_jinja(template, data['variables'])
-        for email in data['emails']:
-            sendmail(email, rendered_template)
+        sendmail(data['emails'], rendered_template)
         notification['status'] = 'sent'
     except ConnectionError as e:
         logger.error(f'Connection problems with auth service: {e}')
@@ -89,16 +88,17 @@ def parse_jinja(template_str, variables):
     return rendered_template
 
 
-def sendmail(recepient: str,  msg: str) -> None:
+def sendmail(emails: list,  msg: str) -> None:
     smtp_serv = smtplib.SMTP(settings.smtpStr, settings.smtpPort)
     smtp_serv.ehlo_or_helo_if_needed()
     smtp_serv.starttls()
     smtp_serv.ehlo()
     smtp_serv.login(settings.sender, settings.password)
-    try:
-        smtp_serv.sendmail(settings.sender, recepient, msg)
-    except smtplib.SMTPException:
-        logger.error(f'Cannot send email to email {recepient}')
+    for recepient in emails:
+        try:
+            smtp_serv.sendmail(settings.sender, recepient, msg)
+        except smtplib.SMTPException:
+            logger.error(f'Cannot send email to email {recepient}')
     smtp_serv.quit() 
 
 

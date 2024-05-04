@@ -1,0 +1,46 @@
+x-common:
+  &common
+    networks:
+      - praktikum-network
+    restart: always
+
+version: '3.9'
+services:
+
+  api:
+    <<: *common
+    build: ${API_PATH}
+    image: api-image
+    container_name: api
+    entrypoint: ["gunicorn", "main:app", "-k", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:${API_PORT}"]
+    expose:
+      - ${API_PORT}
+    ports:
+      - ${API_PORT}:${API_PORT}
+    volumes:
+      - api:/data
+
+
+  tests:
+    image: api-image
+    container_name: tests
+    entrypoint: >
+      sh -c "pip install --no-cache-dir -r tests/functional/requirements.txt
+      && python -m pytest tests/functional --asyncio-mode=auto"
+    volumes:
+      - ../../tests/:/app/tests/
+    networks:
+      - praktikum-network
+
+    depends_on:
+      elastic:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+networks:
+  praktikum-network:
+    name: praktikum-network
+
+volumes:
+  api:

@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.11
 
 ENV PYTHONUNBUFFERED 1
 
@@ -8,9 +8,9 @@ COPY requirements.txt $ROOT_APP/requirements.txt
 
 WORKDIR $ROOT_APP
 
-RUN pip install -r requirements.txt
+RUN  pip install --upgrade pip \
+     && pip install --no-cache-dir -r requirements.txt
 
 COPY src $ROOT_APP/
 
 #CMD uvicorn main:app --port 8000 --host 0.0.0.0
-CMD python main.py
