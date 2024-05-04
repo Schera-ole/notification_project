@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.11
 
 ENV PYTHONUNBUFFERED 1
 
@@ -14,4 +14,3 @@ RUN  pip install --upgrade pip \
 COPY src $ROOT_APP/
 
 #CMD uvicorn main:app --port 8000 --host 0.0.0.0
-CMD python main.py
