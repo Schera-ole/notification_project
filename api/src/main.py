@@ -6,7 +6,6 @@ from config import settings
 from db import psql
 from fastapi import FastAPI
 from api.v1 import notification, templates
-
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
