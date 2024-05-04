@@ -42,6 +42,11 @@ services:
     build: api
     expose:
       - ${API_PORT}
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        gunicorn main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${API_PORT}
     ports:
       - ${API_PORT}:${API_PORT}
     env_file:
@@ -49,7 +54,6 @@ services:
     depends_on:
       psql-server:
         condition: service_healthy
-
 
   psql-server:
     <<: *common
