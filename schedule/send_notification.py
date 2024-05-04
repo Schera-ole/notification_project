@@ -43,7 +43,7 @@ def call_api():
                 "template_name": template["name"],
                 "version": template["version"],
                 "send_immediately": True,
-                "variables": {"key1": "value1", "key2": "value2"}
+                "variables": {}
             }
             response = requests.post(url, json=data)
             logger.info(response.json())

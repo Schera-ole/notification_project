@@ -28,7 +28,12 @@ async def lifespan(app: FastAPI):
     logger.info('Closing queue connection.')
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    title='Praktikum',
+    docs_url='/notify/openapi',
+    openapi_url='/notify/openapi.json'
+)
 app.include_router(notification.router, prefix='/api/v1/notification', tags=['send_notification'])
 app.include_router(templates.router, prefix='/api/v1/templates', tags=['templates'])
 

@@ -8,6 +8,7 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 
+
 logger = logging.getLogger('uvicorn')
 router = APIRouter()
 

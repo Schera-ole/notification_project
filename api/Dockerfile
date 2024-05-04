@@ -8,7 +8,8 @@ COPY requirements.txt $ROOT_APP/requirements.txt
 
 WORKDIR $ROOT_APP
 
-RUN pip install --no-cache-dir -r requirements.txt
+RUN  pip install --upgrade pip \
+     && pip install --no-cache-dir -r requirements.txt
 
 COPY src $ROOT_APP/
 
