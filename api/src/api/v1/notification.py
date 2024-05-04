@@ -10,6 +10,23 @@ from fastapi import APIRouter, HTTPException
 logger = logging.getLogger('uvicorn')
 router = APIRouter()
 
+credentials = pika.PlainCredentials(
+        settings.rabbit_username,
+        settings.rabbit_password,
+    )
+parameters = pika.ConnectionParameters(
+    settings.rabbit_host,
+    credentials=credentials,
+    heartbeat=settings.rabbit_heartbeat,
+    blocked_connection_timeout=settings.rabbit_timeout,
+)
+
+def _connect():
+    return pika.BlockingConnection(parameters=parameters)
+
+connection = _connect()
+channel = connection.channel()
+
 @router.post('send', status_code=http.HTTPStatus.CREATED, response_model=dict)
 def put_notification_to_queue(data: Event):
     data_dump = data.model_dump()

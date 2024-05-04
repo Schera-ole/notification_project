@@ -10,40 +10,23 @@ from api.v1 import notification, templates
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
+
 logger = logging.getLogger('uvicorn')
 logger.setLevel(settings.log_level)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global connection
-    global channel
 
     engine = create_async_engine(str(settings.psql_dsn), echo=True, future=True)
     psql.async_session = sessionmaker(
         engine, class_=AsyncSession, expire_on_commit=False
     )
-    credentials = pika.PlainCredentials(
-        settings.rabbit_username,
-        settings.rabbit_password,
-    )
-    parameters = pika.ConnectionParameters(
-        settings.rabbit_host,
-        credentials=credentials,
-        heartbeat=settings.rabbit_heartbeat,
-        blocked_connection_timeout=settings.rabbit_timeout,
-    )
 
-    def _connect():
-        return pika.BlockingConnection(parameters=parameters)
-
-    connection = _connect()
-    channel = connection.channel()
     logger.info('Connected to queue.')
     yield
     await psql.async_session.close()
     logger.info('Closing queue connection.')
-    connection.close()
 
 
 app = FastAPI(lifespan=lifespan)
