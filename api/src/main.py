@@ -51,7 +51,12 @@ async def lifespan(app: FastAPI):
     connection.close()
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    title='Praktikum',
+    docs_url='/notify/openapi',
+    openapi_url='/notify/openapi.json'
+)
 
 
 @app.post('/send_notification/', status_code=http.HTTPStatus.CREATED, response_model=dict)
